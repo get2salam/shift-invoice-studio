@@ -30,6 +30,21 @@ describe('parseTime', () => {
   it('handles single-digit hours', () => {
     expect(parseTime('7:00')).toEqual({ hours: 7, minutes: 0 });
   });
+
+  it('rejects out-of-range hours', () => {
+    expect(parseTime('25:00')).toBeNull();
+    expect(parseTime('24:00')).toBeNull();
+  });
+
+  it('rejects out-of-range minutes', () => {
+    expect(parseTime('09:60')).toBeNull();
+    expect(parseTime('09:99')).toBeNull();
+  });
+
+  it('accepts boundary times', () => {
+    expect(parseTime('00:00')).toEqual({ hours: 0, minutes: 0 });
+    expect(parseTime('23:59')).toEqual({ hours: 23, minutes: 59 });
+  });
 });
 
 describe('calculateHours', () => {
