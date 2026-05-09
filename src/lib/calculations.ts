@@ -104,7 +104,13 @@ export function createShiftEntry(
 }
 
 export function formatDate(dateStr: string): string {
+  const isoMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    const [, year, month, day] = isoMatch;
+    return `${day}/${month}/${year}`;
+  }
   const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return dateStr;
   const day = date.getDate().toString().padStart(2, '0');
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
   const year = date.getFullYear();

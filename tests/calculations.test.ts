@@ -144,6 +144,21 @@ describe('formatDate', () => {
   it('formats ISO date to DD/MM/YYYY', () => {
     expect(formatDate('2024-01-15')).toBe('15/01/2024');
   });
+
+  it('is timezone-independent for ISO date strings', () => {
+    const originalTZ = process.env.TZ;
+    process.env.TZ = 'Pacific/Pago_Pago';
+    try {
+      expect(formatDate('2024-01-15')).toBe('15/01/2024');
+      expect(formatDate('2024-12-31')).toBe('31/12/2024');
+    } finally {
+      process.env.TZ = originalTZ;
+    }
+  });
+
+  it('returns original string for unparseable input', () => {
+    expect(formatDate('not-a-date')).toBe('not-a-date');
+  });
 });
 
 describe('formatCurrency', () => {
