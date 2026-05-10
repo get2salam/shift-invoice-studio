@@ -35,4 +35,31 @@ describe('getShiftValidationIssues', () => {
 
     expect(issues.some((issue) => issue.message.includes('end time before or equal'))).toBe(true);
   });
+
+  it('returns no issues for an empty shift list', () => {
+    expect(getShiftValidationIssues([])).toEqual([]);
+  });
+
+  it('flags shifts longer than 16 hours', () => {
+    const marathon = createShiftEntry('Marathon shift', '2024-05-03', '04:00', '23:00', false);
+    const issues = getShiftValidationIssues([marathon]);
+
+    expect(issues.some((issue) => issue.message.includes('longer than 16 hours'))).toBe(true);
+  });
+
+  it('flags shifts missing a description', () => {
+    const shift = createShiftEntry('placeholder', '2024-05-04', '08:00', '16:00', false);
+    shift.description = '   ';
+    const issues = getShiftValidationIssues([shift]);
+
+    expect(issues.some((issue) => issue.message.includes('missing a description'))).toBe(true);
+  });
+
+  it('does not flag chronologically ordered shifts as out-of-order', () => {
+    const first = createShiftEntry('Day one', '2024-05-01', '08:00', '16:00', false);
+    const second = createShiftEntry('Day two', '2024-05-02', '08:00', '16:00', false);
+    const issues = getShiftValidationIssues([first, second]);
+
+    expect(issues.some((issue) => issue.message.includes('not sorted by date'))).toBe(false);
+  });
 });
