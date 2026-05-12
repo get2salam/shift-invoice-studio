@@ -62,4 +62,20 @@ describe('getShiftValidationIssues', () => {
 
     expect(issues.some((issue) => issue.message.includes('not sorted by date'))).toBe(false);
   });
+
+  it('flags overlapping shifts on the same day', () => {
+    const morning = createShiftEntry('Morning', '2024-05-05', '08:00', '14:00', false);
+    const overlap = createShiftEntry('Overlap', '2024-05-05', '13:00', '20:00', false);
+    const issues = getShiftValidationIssues([morning, overlap]);
+
+    expect(issues.some((issue) => issue.message.includes('overlap'))).toBe(true);
+  });
+
+  it('does not flag back-to-back shifts as overlapping', () => {
+    const first = createShiftEntry('Early', '2024-05-06', '08:00', '14:00', false);
+    const second = createShiftEntry('Late', '2024-05-06', '14:00', '20:00', false);
+    const issues = getShiftValidationIssues([first, second]);
+
+    expect(issues.some((issue) => issue.message.includes('overlap'))).toBe(false);
+  });
 });

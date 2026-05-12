@@ -1,5 +1,5 @@
 import { ShiftEntry } from './types';
-import { calculateHours } from './calculations';
+import { calculateHours, parseTime } from './calculations';
 
 export interface ShiftValidationIssue {
   level: 'warning' | 'info';
@@ -39,6 +39,33 @@ export function getShiftValidationIssues(shifts: ShiftEntry[]): ShiftValidationI
     }
     if (!shift.description.trim()) {
       issues.push({ level: 'warning', message: `A shift on ${shift.date} is missing a description.` });
+    }
+  });
+
+  const intervalsByDate = new Map<string, { start: number; end: number; desc: string }[]>();
+  shifts.forEach((shift) => {
+    const start = parseTime(shift.startTime);
+    const end = parseTime(shift.endTime);
+    if (!start || !end) return;
+    const startMin = start.hours * 60 + start.minutes;
+    const endMin = end.hours * 60 + end.minutes;
+    if (endMin <= startMin) return;
+    const list = intervalsByDate.get(shift.date) ?? [];
+    list.push({ start: startMin, end: endMin, desc: shift.description });
+    intervalsByDate.set(shift.date, list);
+  });
+
+  intervalsByDate.forEach((daysShifts, date) => {
+    if (daysShifts.length < 2) return;
+    const sorted = [...daysShifts].sort((a, b) => a.start - b.start);
+    for (let i = 1; i < sorted.length; i++) {
+      if (sorted[i].start < sorted[i - 1].end) {
+        issues.push({
+          level: 'warning',
+          message: `Shifts on ${date} overlap: "${sorted[i - 1].desc}" and "${sorted[i].desc}".`,
+        });
+        return;
+      }
     }
   });
 
