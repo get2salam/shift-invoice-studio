@@ -167,6 +167,20 @@ describe('formatCurrency', () => {
     expect(formatCurrency(14.5)).toBe('£14.50');
     expect(formatCurrency(0)).toBe('£0.00');
   });
+
+  it('inserts thousand separators for large amounts', () => {
+    expect(formatCurrency(1234.56)).toBe('£1,234.56');
+    expect(formatCurrency(1000000)).toBe('£1,000,000.00');
+  });
+
+  it('places the negative sign before the currency symbol', () => {
+    expect(formatCurrency(-10)).toBe('-£10.00');
+    expect(formatCurrency(-1234.5)).toBe('-£1,234.50');
+  });
+
+  it('honours a custom currency symbol', () => {
+    expect(formatCurrency(2500, '$')).toBe('$2,500.00');
+  });
 });
 
 describe('generateInvoiceNumber', () => {

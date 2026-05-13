@@ -118,7 +118,10 @@ export function formatDate(dateStr: string): string {
 }
 
 export function formatCurrency(amount: number, symbol: string = RATES.currencySymbol): string {
-  return `${symbol}${amount.toFixed(2)}`;
+  const sign = amount < 0 ? '-' : '';
+  const [whole, fraction] = Math.abs(amount).toFixed(2).split('.');
+  const withSeparators = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return `${sign}${symbol}${withSeparators}.${fraction}`;
 }
 
 export function getCurrentMonthPrefix(): string {
