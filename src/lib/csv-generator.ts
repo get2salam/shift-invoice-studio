@@ -39,12 +39,15 @@ export function generateInvoiceCsv(data: InvoiceData): string {
     rows.push(['Notes', data.notes]);
   }
 
-  return rows.map((row) => row.map((cell) => escapeCsv(cell ?? '')).join(',')).join('\n');
+  return rows.map((row) => row.map((cell) => escapeCsv(cell ?? '')).join(',')).join('\r\n');
 }
+
+// U+FEFF helps Excel detect UTF-8 so non-ASCII characters (e.g. £, €) render correctly.
+const UTF8_BOM = '﻿';
 
 export function downloadCsv(data: InvoiceData, filename: string): void {
   const csv = generateInvoiceCsv(data);
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob([UTF8_BOM + csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
