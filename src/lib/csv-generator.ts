@@ -1,4 +1,5 @@
 import { InvoiceData } from './types';
+import { formatCurrency } from './calculations';
 
 function escapeCsv(value: string | number): string {
   const stringValue = String(value ?? '');
@@ -10,6 +11,7 @@ function escapeCsv(value: string | number): string {
 
 export function generateInvoiceCsv(data: InvoiceData): string {
   const { companyDetails, clientDetails, rateSettings } = data;
+  const money = (amount: number) => formatCurrency(amount, rateSettings.currencySymbol);
   const rows: Array<Array<string | number>> = [
     ['Invoice Number', data.invoiceNumber],
     ['Invoice Date', data.invoiceDate],
@@ -25,13 +27,14 @@ export function generateInvoiceCsv(data: InvoiceData): string {
       shift.endTime,
       shift.hours,
       shift.otHours,
-      `${rateSettings.currencySymbol}${shift.rate.toFixed(2)}`,
-      `${rateSettings.currencySymbol}${shift.amount.toFixed(2)}`,
+      money(shift.rate),
+      money(shift.amount),
     ]),
     [],
-    ['Daily Total', `${rateSettings.currencySymbol}${data.dailyTotal.toFixed(2)}`],
-    ['OT Total', `${rateSettings.currencySymbol}${data.otTotal.toFixed(2)}`],
-    ['Grand Total', `${rateSettings.currencySymbol}${data.grandTotal.toFixed(2)}`],
+    ['Daily Total', money(data.dailyTotal)],
+    ['OT Hours Total', data.otHoursTotal],
+    ['OT Total', money(data.otTotal)],
+    ['Grand Total', money(data.grandTotal)],
   ];
 
   if (data.notes) {

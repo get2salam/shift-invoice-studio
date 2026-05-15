@@ -53,4 +53,20 @@ describe('generateInvoiceCsv', () => {
     expect(lines.some((line) => line.startsWith('Morning,2024-05-01,'))).toBe(true);
     expect(lines.some((line) => line.startsWith('Evening,2024-05-02,'))).toBe(true);
   });
+
+  it('formats currency totals with thousand separators', () => {
+    const csv = generateInvoiceCsv(
+      buildInvoice({ dailyTotal: 1400, otTotal: 28, grandTotal: 1428 }),
+    );
+    const lines = csv.split('\r\n');
+    expect(lines).toContain('Daily Total,"£1,400.00"');
+    expect(lines).toContain('Grand Total,"£1,428.00"');
+  });
+
+  it('includes a dedicated OT hours total row', () => {
+    const csv = generateInvoiceCsv(buildInvoice({ otHoursTotal: 4.5, otTotal: 63 }));
+    const lines = csv.split('\r\n');
+    expect(lines).toContain('OT Hours Total,4.5');
+    expect(lines).toContain('OT Total,£63.00');
+  });
 });
