@@ -53,7 +53,7 @@ export function cleanOCRText(text: string): string {
   return text
     .replace(/[|]/g, '')
     .replace(/\s+/g, ' ')
-    .replace(/[oO](?=\d)/g, '0')
-    .replace(/[lI](?=\d)/g, '1')
+    .replace(/[oO](?=\d)|(?<=\d)[oO]/g, '0')
+    .replace(/[lI](?=\d)|(?<=\d)[lI]/g, '1')
     .trim();
 }

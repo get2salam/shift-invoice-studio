@@ -83,6 +83,18 @@ describe('cleanOCRText', () => {
     expect(cleanOCRText('I2:00')).toBe('12:00');
   });
 
+  it('corrects letter-for-digit misreads that follow a digit', () => {
+    expect(cleanOCRText('1O:00')).toBe('10:00');
+    expect(cleanOCRText('8O')).toBe('80');
+    expect(cleanOCRText('1l:30')).toBe('11:30');
+    expect(cleanOCRText('2I:45')).toBe('21:45');
+  });
+
+  it('leaves letters alone when not adjacent to a digit', () => {
+    expect(cleanOCRText('Hello World')).toBe('Hello World');
+    expect(cleanOCRText("O'Brien")).toBe("O'Brien");
+  });
+
   it('trims whitespace', () => {
     expect(cleanOCRText('  hello  ')).toBe('hello');
   });
