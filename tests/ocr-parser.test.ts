@@ -66,6 +66,22 @@ describe('parseTimesheetText', () => {
     expect(result.shifts[0].startTime).toBe('08:00');
     expect(result.shifts[0].endTime).toBe('17:30');
   });
+
+  it('parses lines that begin with a day-of-week prefix', () => {
+    const text = `
+      Mon 15/03/2024 08:00 17:00
+      Tue 16/03/2024 09:30 18:30
+    `;
+
+    const result = parseTimesheetText(text);
+
+    expect(result.shifts).toHaveLength(2);
+    expect(result.shifts[0].date).toBe('2024-03-15');
+    expect(result.shifts[0].startTime).toBe('08:00');
+    expect(result.shifts[0].endTime).toBe('17:00');
+    expect(result.shifts[1].date).toBe('2024-03-16');
+    expect(result.shifts[1].startTime).toBe('09:30');
+  });
 });
 
 describe('cleanOCRText', () => {

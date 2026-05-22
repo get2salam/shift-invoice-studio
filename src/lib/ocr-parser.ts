@@ -31,7 +31,8 @@ export function parseTimesheetText(text: string): ParsedTimesheet {
   }
 
   if (shifts.length === 0) {
-    const dayPattern = /(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*\s*(\d{1,2})[\\\/](\d{1,2})(?:[\\\/](\d{2,4}))?\s*(\d{1,2})[:\.]?(\d{2})\s*(\d{1,2})[:\.]?(\d{2})/gi;
+    // No /g flag: String.match with /g would discard capture groups, leaving m[1..7] undefined.
+    const dayPattern = /(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*\s*(\d{1,2})[\\\/](\d{1,2})(?:[\\\/](\d{2,4}))?\s*(\d{1,2})[:\.]?(\d{2})\s*(\d{1,2})[:\.]?(\d{2})/i;
     for (const line of lines) {
       const m = line.match(dayPattern);
       if (m) {
