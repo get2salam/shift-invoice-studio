@@ -81,6 +81,21 @@ describe('parseTimesheetText', () => {
     expect(result.shifts[0].date).toBe('2024-03-15');
   });
 
+  it('rejects entries with out-of-range hour or minute components', () => {
+    const text = `
+      15/03/2024 25:00 17:00
+      15/03/2024 08:60 17:00
+      15/03/2024 08:00 24:00
+      15/03/2024 08:00 17:99
+      16/03/2024 08:00 17:00
+    `;
+
+    const result = parseTimesheetText(text);
+
+    expect(result.shifts).toHaveLength(1);
+    expect(result.shifts[0].date).toBe('2024-03-16');
+  });
+
   it('parses lines that begin with a day-of-week prefix', () => {
     const text = `
       Mon 15/03/2024 08:00 17:00

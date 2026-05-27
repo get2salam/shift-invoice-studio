@@ -14,6 +14,12 @@ function buildShiftFromMatch(match: RegExpMatchArray, currentYear: number): Shif
   const monthNum = parseInt(match[2], 10);
   if (dayNum < 1 || dayNum > 31 || monthNum < 1 || monthNum > 12) return null;
 
+  const startHour = parseInt(match[4], 10);
+  const startMinute = parseInt(match[5], 10);
+  const endHour = parseInt(match[6], 10);
+  const endMinute = parseInt(match[7], 10);
+  if (startHour > 23 || endHour > 23 || startMinute > 59 || endMinute > 59) return null;
+
   const day = match[1].padStart(2, '0');
   const month = match[2].padStart(2, '0');
   const year = match[3] ? (match[3].length === 2 ? `20${match[3]}` : match[3]) : currentYear.toString();
