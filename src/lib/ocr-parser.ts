@@ -63,10 +63,17 @@ export function parseTimesheetText(text: string): ParsedTimesheet {
 }
 
 export function cleanOCRText(text: string): string {
+  // Replace whole runs of OCR-confusable letters so consecutive misreads (e.g.
+  // "1OO:00") all get corrected; per-character lookarounds only fix the letter
+  // touching the digit and leave the rest behind.
   return text
     .replace(/[|]/g, '')
     .replace(/\s+/g, ' ')
-    .replace(/[oO](?=\d)|(?<=\d)[oO]/g, '0')
-    .replace(/[lI](?=\d)|(?<=\d)[lI]/g, '1')
+    .replace(/[oOlI]+/g, (run, offset: number, full: string) => {
+      const before = full[offset - 1] ?? '';
+      const after = full[offset + run.length] ?? '';
+      if (!/\d/.test(before) && !/\d/.test(after)) return run;
+      return run.replace(/[oO]/g, '0').replace(/[lI]/g, '1');
+    })
     .trim();
 }

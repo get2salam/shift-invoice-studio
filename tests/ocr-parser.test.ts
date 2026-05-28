@@ -140,6 +140,13 @@ describe('cleanOCRText', () => {
     expect(cleanOCRText("O'Brien")).toBe("O'Brien");
   });
 
+  it('corrects consecutive letter misreads when the run touches a digit', () => {
+    expect(cleanOCRText('1OO:00')).toBe('100:00');
+    expect(cleanOCRText('1ll:30')).toBe('111:30');
+    expect(cleanOCRText('8OO')).toBe('800');
+    expect(cleanOCRText('OO8')).toBe('008');
+  });
+
   it('trims whitespace', () => {
     expect(cleanOCRText('  hello  ')).toBe('hello');
   });
