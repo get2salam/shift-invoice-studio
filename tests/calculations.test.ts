@@ -99,6 +99,15 @@ describe('calculateShiftAmount', () => {
     const expected = RATES.dailyRate + 2 * RATES.otRate;
     expect(calculateShiftAmount(12, 2)).toBe(expected);
   });
+
+  it('does not charge for invalid or zero-hour shifts', () => {
+    expect(calculateShiftAmount(0, 0)).toBe(0);
+    expect(calculateShiftAmount(-8, 2)).toBe(0);
+  });
+
+  it('ignores negative overtime adjustments when calculating pay', () => {
+    expect(calculateShiftAmount(8, -1)).toBe(RATES.dailyRate);
+  });
 });
 
 describe('calculateInvoiceTotals', () => {
@@ -121,6 +130,26 @@ describe('calculateInvoiceTotals', () => {
     expect(totals.otHoursTotal).toBe(0);
     expect(totals.otTotal).toBe(0);
     expect(totals.grandTotal).toBe(0);
+  });
+
+  it('excludes invalid time ranges from billable invoice totals', () => {
+    const valid = createShiftEntry('Day shift', '2024-01-01', '08:00', '18:00', false);
+    const invalid = createShiftEntry('OCR review needed', '2024-01-02', '18:00', '08:00', false);
+    const totals = calculateInvoiceTotals([valid, invalid]);
+
+    expect(invalid.hours).toBeLessThan(0);
+    expect(invalid.amount).toBe(0);
+    expect(totals.dailyTotal).toBe(RATES.dailyRate);
+    expect(totals.grandTotal).toBe(RATES.dailyRate);
+  });
+
+  it('does not let negative overtime reduce invoice totals', () => {
+    const shift = createShiftEntry('Adjusted shift', '2024-01-03', '08:00', '16:00', false);
+    const totals = calculateInvoiceTotals([{ ...shift, otHours: -2 }]);
+
+    expect(totals.otHoursTotal).toBe(0);
+    expect(totals.otTotal).toBe(0);
+    expect(totals.grandTotal).toBe(RATES.dailyRate);
   });
 });
 

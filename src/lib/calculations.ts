@@ -33,8 +33,9 @@ export function calculateOvertimeHours(totalHours: number, rates: RateSettings =
 }
 
 export function calculateShiftAmount(hours: number, otHours: number, rates: RateSettings = RATES): number {
+  if (hours <= 0) return 0;
   const baseAmount = rates.dailyRate;
-  const otAmount = otHours * rates.otRate;
+  const otAmount = Math.max(0, otHours) * rates.otRate;
   return baseAmount + otAmount;
 }
 
@@ -74,8 +75,9 @@ export function calculateInvoiceTotals(
   otTotal: number;
   grandTotal: number;
 } {
-  const dailyTotal = shifts.length * rates.dailyRate;
-  const otHoursTotal = shifts.reduce((sum, shift) => sum + shift.otHours, 0);
+  const billableShifts = shifts.filter((shift) => shift.hours > 0);
+  const dailyTotal = billableShifts.length * rates.dailyRate;
+  const otHoursTotal = billableShifts.reduce((sum, shift) => sum + Math.max(0, shift.otHours), 0);
   const otTotal = otHoursTotal * rates.otRate;
   const grandTotal = dailyTotal + otTotal;
   return { dailyTotal, otHoursTotal, otTotal, grandTotal };
