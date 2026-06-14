@@ -42,6 +42,25 @@ describe('generateInvoiceCsv', () => {
     expect(csv).toContain('"Line one,with comma\nLine two with ""quotes"""');
   });
 
+  it('neutralizes formula-like values before spreadsheet export', () => {
+    const shifts = [
+      createShiftEntry('=IMPORTDATA("https://example.test")', '2024-05-01', '08:00', '14:00', false),
+      createShiftEntry('  @SUM(1,2)', '2024-05-02', '14:00', '20:00', false),
+    ];
+    const csv = generateInvoiceCsv(
+      buildInvoice({
+        invoiceNumber: '+PAYLOAD',
+        notes: '-cmd|calc',
+        shifts,
+      }),
+    );
+
+    expect(csv).toContain("Invoice Number,'+PAYLOAD");
+    expect(csv).toContain('"\'=IMPORTDATA(""https://example.test"")"');
+    expect(csv).toContain('"\'  @SUM(1,2)"');
+    expect(csv).toContain("Notes,'-cmd|calc");
+  });
+
   it('emits a header row and one row per shift', () => {
     const shifts = [
       createShiftEntry('Morning', '2024-05-01', '08:00', '14:00', false),

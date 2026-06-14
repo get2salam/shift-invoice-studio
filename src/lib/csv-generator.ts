@@ -1,8 +1,9 @@
 import { InvoiceData } from './types';
 import { formatCurrency } from './calculations';
+import { neutralizeSpreadsheetFormula } from './spreadsheet-safety';
 
 function escapeCsv(value: string | number): string {
-  const stringValue = String(value ?? '');
+  const stringValue = typeof value === 'string' ? neutralizeSpreadsheetFormula(value) : String(value ?? '');
   if (/[",\n]/.test(stringValue)) {
     return `"${stringValue.replace(/"/g, '""')}"`;
   }

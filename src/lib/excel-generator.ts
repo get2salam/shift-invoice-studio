@@ -1,34 +1,39 @@
 import * as XLSX from 'xlsx';
 import { InvoiceData } from './types';
 import { formatCurrency, formatDate } from './calculations';
+import { neutralizeSpreadsheetFormula } from './spreadsheet-safety';
+
+function safeCell(value: string): string {
+  return neutralizeSpreadsheetFormula(value);
+}
 
 export function generateInvoiceExcel(data: InvoiceData): XLSX.WorkBook {
   const wb = XLSX.utils.book_new();
   const wsData: (string | number | null)[][] = [];
   const { companyDetails, clientDetails, rateSettings } = data;
 
-  wsData.push(['', companyDetails.name, '', '', '', '', '', 'INVOICE', '']);
-  wsData.push(['', companyDetails.tagline, '', '', '', '', '', '', '']);
+  wsData.push(['', safeCell(companyDetails.name), '', '', '', '', '', 'INVOICE', '']);
+  wsData.push(['', safeCell(companyDetails.tagline), '', '', '', '', '', '', '']);
   wsData.push(['', '', '', '', '', '', '', '', '']);
-  wsData.push(['', 'FROM', '', '', '', '', 'Invoice No.', '', data.invoiceNumber]);
-  wsData.push(['', `${companyDetails.address}, ${companyDetails.city}, ${companyDetails.postcode}`, '', '', '', '', 'Date', '', formatDate(data.invoiceDate)]);
-  wsData.push(['', `${companyDetails.phone} | ${companyDetails.email}`, '', '', '', '', 'Due Date', '', data.dueDate]);
-  wsData.push(['', `${companyDetails.taxLabel}# ${companyDetails.taxNumber}`, '', '', '', '', '', '', '']);
+  wsData.push(['', 'FROM', '', '', '', '', 'Invoice No.', '', safeCell(data.invoiceNumber)]);
+  wsData.push(['', safeCell(`${companyDetails.address}, ${companyDetails.city}, ${companyDetails.postcode}`), '', '', '', '', 'Date', '', safeCell(formatDate(data.invoiceDate))]);
+  wsData.push(['', safeCell(`${companyDetails.phone} | ${companyDetails.email}`), '', '', '', '', 'Due Date', '', safeCell(data.dueDate)]);
+  wsData.push(['', safeCell(`${companyDetails.taxLabel}# ${companyDetails.taxNumber}`), '', '', '', '', '', '', '']);
   wsData.push(['', '', '', '', '', '', '', '', '']);
   wsData.push(['', 'BILL TO', '', '', '', '', '', '', '']);
-  wsData.push(['', clientDetails.name, '', '', '', '', '', '', '']);
-  wsData.push(['', clientDetails.contactName, '', '', '', '', '', '', '']);
-  wsData.push(['', clientDetails.email, '', '', '', '', '', '', '']);
-  wsData.push(['', `${clientDetails.address}, ${clientDetails.city}, ${clientDetails.postcode}`, '', '', '', '', '', '', '']);
+  wsData.push(['', safeCell(clientDetails.name), '', '', '', '', '', '', '']);
+  wsData.push(['', safeCell(clientDetails.contactName), '', '', '', '', '', '', '']);
+  wsData.push(['', safeCell(clientDetails.email), '', '', '', '', '', '', '']);
+  wsData.push(['', safeCell(`${clientDetails.address}, ${clientDetails.city}, ${clientDetails.postcode}`), '', '', '', '', '', '', '']);
   wsData.push(['', '', '', '', '', '', '', '', '']);
   wsData.push(['', 'DESCRIPTION', 'DATE', 'START', 'END', 'HRS', 'OT HRS', 'RATE', 'AMOUNT']);
 
   for (const shift of data.shifts) {
-    wsData.push(['', shift.description, formatDate(shift.date), shift.startTime, shift.endTime, shift.hours, shift.otHours, shift.rate, shift.amount]);
+    wsData.push(['', safeCell(shift.description), safeCell(formatDate(shift.date)), safeCell(shift.startTime), safeCell(shift.endTime), shift.hours, shift.otHours, shift.rate, shift.amount]);
   }
 
   wsData.push(['', '', '', '', '', '', '', '', '']);
-  wsData.push(['', `* Overtime: Hours beyond ${rateSettings.standardHours}hrs @ ${formatCurrency(rateSettings.otRate, rateSettings.currencySymbol)}/hr`, '', '', '', '', '', '', '']);
+  wsData.push(['', safeCell(`* Overtime: Hours beyond ${rateSettings.standardHours}hrs @ ${formatCurrency(rateSettings.otRate, rateSettings.currencySymbol)}/hr`), '', '', '', '', '', '', '']);
   wsData.push(['', '', '', '', '', '', '', '', '']);
   wsData.push(['', '', '', '', '', '', `Daily Total (${data.shifts.length} days)`, '', data.dailyTotal]);
   wsData.push(['', '', '', '', '', '', `OT Total (${data.otHoursTotal} hrs)`, '', data.otTotal]);
@@ -36,15 +41,15 @@ export function generateInvoiceExcel(data: InvoiceData): XLSX.WorkBook {
   wsData.push(['', '', '', '', '', 'TOTAL DUE', '', '', data.grandTotal]);
   wsData.push(['', '', '', '', '', '', '', '', '']);
   wsData.push(['', 'PAYMENT DETAILS', '', '', '', '', '', '', '']);
-  wsData.push(['', `Bank: ${companyDetails.bankName}`, '', '', '', '', '', '', '']);
-  wsData.push(['', `Account Name: ${companyDetails.accountName}`, '', '', '', '', '', '', '']);
-  wsData.push(['', `Account Number: ${companyDetails.accountNumber}`, '', '', '', '', '', '', '']);
-  wsData.push(['', `Sort Code: ${companyDetails.sortCode}`, '', '', '', '', '', '', '']);
+  wsData.push(['', safeCell(`Bank: ${companyDetails.bankName}`), '', '', '', '', '', '', '']);
+  wsData.push(['', safeCell(`Account Name: ${companyDetails.accountName}`), '', '', '', '', '', '', '']);
+  wsData.push(['', safeCell(`Account Number: ${companyDetails.accountNumber}`), '', '', '', '', '', '', '']);
+  wsData.push(['', safeCell(`Sort Code: ${companyDetails.sortCode}`), '', '', '', '', '', '', '']);
 
   if (data.notes) {
     wsData.push(['', '', '', '', '', '', '', '', '']);
     wsData.push(['', 'NOTES', '', '', '', '', '', '', '']);
-    wsData.push(['', data.notes, '', '', '', '', '', '', '']);
+    wsData.push(['', safeCell(data.notes), '', '', '', '', '', '', '']);
   }
 
   const ws = XLSX.utils.aoa_to_sheet(wsData);
