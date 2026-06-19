@@ -18,7 +18,9 @@ export function calculateHours(startTime: string, endTime: string): number {
   const end = parseTime(endTime);
   if (!start || !end) return 0;
   const startMinutes = start.hours * 60 + start.minutes;
-  const endMinutes = end.hours * 60 + end.minutes;
+  let endMinutes = end.hours * 60 + end.minutes;
+  if (endMinutes === startMinutes) return 0;
+  if (endMinutes < startMinutes) endMinutes += 24 * 60;
   const diffMinutes = endMinutes - startMinutes;
   return Math.round((diffMinutes / 60) * 100) / 100;
 }

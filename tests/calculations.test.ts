@@ -63,6 +63,15 @@ describe('calculateHours', () => {
   it('handles 12-hour shifts', () => {
     expect(calculateHours('06:00', '18:00')).toBe(12);
   });
+
+  it('calculates overnight shifts that cross midnight', () => {
+    expect(calculateHours('22:00', '06:00')).toBe(8);
+    expect(calculateHours('23:30', '01:15')).toBe(1.75);
+  });
+
+  it('treats matching start and end times as zero hours', () => {
+    expect(calculateHours('08:00', '08:00')).toBe(0);
+  });
 });
 
 describe('roundHoursToNearest', () => {
@@ -132,13 +141,23 @@ describe('calculateInvoiceTotals', () => {
     expect(totals.grandTotal).toBe(0);
   });
 
-  it('excludes invalid time ranges from billable invoice totals', () => {
+  it('excludes zero-length time ranges from billable invoice totals', () => {
     const valid = createShiftEntry('Day shift', '2024-01-01', '08:00', '18:00', false);
-    const invalid = createShiftEntry('OCR review needed', '2024-01-02', '18:00', '08:00', false);
+    const invalid = createShiftEntry('OCR review needed', '2024-01-02', '08:00', '08:00', false);
     const totals = calculateInvoiceTotals([valid, invalid]);
 
-    expect(invalid.hours).toBeLessThan(0);
+    expect(invalid.hours).toBe(0);
     expect(invalid.amount).toBe(0);
+    expect(totals.dailyTotal).toBe(RATES.dailyRate);
+    expect(totals.grandTotal).toBe(RATES.dailyRate);
+  });
+
+  it('includes overnight shifts in billable invoice totals', () => {
+    const overnight = createShiftEntry('Night cover', '2024-01-03', '22:00', '06:00', false);
+    const totals = calculateInvoiceTotals([overnight]);
+
+    expect(overnight.hours).toBe(8);
+    expect(overnight.amount).toBe(RATES.dailyRate);
     expect(totals.dailyTotal).toBe(RATES.dailyRate);
     expect(totals.grandTotal).toBe(RATES.dailyRate);
   });

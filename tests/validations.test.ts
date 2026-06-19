@@ -29,11 +29,19 @@ describe('getShiftValidationIssues', () => {
     expect(messages.some((message) => message.includes('not sorted by date'))).toBe(true);
   });
 
-  it('flags invalid time ranges', () => {
-    const invalid = createShiftEntry('Night shift', '2024-05-02', '18:00', '08:00', false);
+  it('flags zero-length time ranges', () => {
+    const invalid = createShiftEntry('Mistyped shift', '2024-05-02', '08:00', '08:00', false);
     const issues = getShiftValidationIssues([invalid]);
 
-    expect(issues.some((issue) => issue.message.includes('end time before or equal'))).toBe(true);
+    expect(issues.some((issue) => issue.message.includes('same start and end time'))).toBe(true);
+  });
+
+  it('accepts overnight shifts that cross midnight', () => {
+    const overnight = createShiftEntry('Night shift', '2024-05-02', '22:00', '06:00', false);
+    const issues = getShiftValidationIssues([overnight]);
+
+    expect(overnight.hours).toBe(8);
+    expect(issues.some((issue) => issue.message.includes('same start and end time'))).toBe(false);
   });
 
   it('returns no issues for an empty shift list', () => {
@@ -77,5 +85,13 @@ describe('getShiftValidationIssues', () => {
     const issues = getShiftValidationIssues([first, second]);
 
     expect(issues.some((issue) => issue.message.includes('overlap'))).toBe(false);
+  });
+
+  it('flags overlapping overnight shifts on the same start date', () => {
+    const overnight = createShiftEntry('Night cover', '2024-05-07', '22:00', '06:00', false);
+    const overlap = createShiftEntry('Relief cover', '2024-05-07', '23:30', '02:00', false);
+    const issues = getShiftValidationIssues([overnight, overlap]);
+
+    expect(issues.some((issue) => issue.message.includes('overlap'))).toBe(true);
   });
 });

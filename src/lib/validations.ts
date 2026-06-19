@@ -14,6 +14,17 @@ export function sortShiftsByDate(shifts: ShiftEntry[]): ShiftEntry[] {
   });
 }
 
+function getShiftIntervalMinutes(shift: ShiftEntry): { start: number; end: number; desc: string } | null {
+  const start = parseTime(shift.startTime);
+  const end = parseTime(shift.endTime);
+  if (!start || !end) return null;
+  const startMin = start.hours * 60 + start.minutes;
+  let endMin = end.hours * 60 + end.minutes;
+  if (endMin === startMin) return null;
+  if (endMin < startMin) endMin += 24 * 60;
+  return { start: startMin, end: endMin, desc: shift.description };
+}
+
 export function getShiftValidationIssues(shifts: ShiftEntry[]): ShiftValidationIssue[] {
   const issues: ShiftValidationIssue[] = [];
   if (!shifts.length) return issues;
@@ -32,7 +43,7 @@ export function getShiftValidationIssues(shifts: ShiftEntry[]): ShiftValidationI
   shifts.forEach((shift) => {
     const computedHours = calculateHours(shift.startTime, shift.endTime);
     if (computedHours <= 0) {
-      issues.push({ level: 'warning', message: `${shift.description} on ${shift.date} has an end time before or equal to the start time.` });
+      issues.push({ level: 'warning', message: `${shift.description} on ${shift.date} has the same start and end time.` });
     }
     if (shift.hours > 16) {
       issues.push({ level: 'warning', message: `${shift.description} on ${shift.date} is longer than 16 hours. Check for OCR mistakes.` });
@@ -44,14 +55,10 @@ export function getShiftValidationIssues(shifts: ShiftEntry[]): ShiftValidationI
 
   const intervalsByDate = new Map<string, { start: number; end: number; desc: string }[]>();
   shifts.forEach((shift) => {
-    const start = parseTime(shift.startTime);
-    const end = parseTime(shift.endTime);
-    if (!start || !end) return;
-    const startMin = start.hours * 60 + start.minutes;
-    const endMin = end.hours * 60 + end.minutes;
-    if (endMin <= startMin) return;
+    const interval = getShiftIntervalMinutes(shift);
+    if (!interval) return;
     const list = intervalsByDate.get(shift.date) ?? [];
-    list.push({ start: startMin, end: endMin, desc: shift.description });
+    list.push(interval);
     intervalsByDate.set(shift.date, list);
   });
 
