@@ -14,6 +14,24 @@ export interface InvoiceDraft {
 
 const STORAGE_KEY = 'shift-invoice-studio:draft';
 
+// Coerce numeric rate fields so corrupted or stringified localStorage values
+// (e.g. dailyRate: "NaN") fall back to safe defaults rather than propagating
+// NaN through invoice calculations.
+function sanitizeRates(raw: unknown): RateSettings {
+  const src = (raw !== null && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const safeNum = (val: unknown, fallback: number): number => {
+    if (typeof val !== 'number' || !Number.isFinite(val)) return fallback;
+    return val;
+  };
+  return {
+    currencySymbol: (typeof src.currencySymbol === 'string' && src.currencySymbol) ? src.currencySymbol : DEFAULT_RATE_SETTINGS.currencySymbol,
+    defaultShiftDescription: (typeof src.defaultShiftDescription === 'string' && src.defaultShiftDescription) ? src.defaultShiftDescription : DEFAULT_RATE_SETTINGS.defaultShiftDescription,
+    dailyRate: safeNum(src.dailyRate, DEFAULT_RATE_SETTINGS.dailyRate),
+    otRate: safeNum(src.otRate, DEFAULT_RATE_SETTINGS.otRate),
+    standardHours: safeNum(src.standardHours, DEFAULT_RATE_SETTINGS.standardHours),
+  };
+}
+
 export function loadInvoiceDraft(): InvoiceDraft | null {
   if (typeof window === 'undefined') return null;
   try {
@@ -28,10 +46,10 @@ export function loadInvoiceDraft(): InvoiceDraft | null {
       dueDate: parsed.dueDate || 'Upon Receipt',
       notes: parsed.notes || '',
       roundHours: parsed.roundHours ?? true,
-      shifts: parsed.shifts || [],
+      shifts: Array.isArray(parsed.shifts) ? parsed.shifts : [],
       companyDetails: { ...DEFAULT_COMPANY_DETAILS, ...parsed.companyDetails },
       clientDetails: { ...DEFAULT_CLIENT_DETAILS, ...parsed.clientDetails },
-      rateSettings: { ...DEFAULT_RATE_SETTINGS, ...parsed.rateSettings },
+      rateSettings: sanitizeRates(parsed.rateSettings),
     };
   } catch (error) {
     console.error('Failed to read invoice draft:', error);
