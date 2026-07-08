@@ -53,6 +53,23 @@ npm run typecheck
 npm run test
 ```
 
+## Billing model
+
+Invoices are **not** hours × hourly rate. Each billable shift charges a flat `dailyRate`,
+and only the hours beyond `standardHours` are billed separately at `otRate` per hour:
+
+- A 4-hour shift and a 10-hour shift cost the client the same amount.
+- A 12-hour shift (with a 10-hour `standardHours` threshold) bills the day rate plus 2 hours of overtime.
+- A shift with zero measurable hours (e.g. an unresolved OCR read) is dropped from the invoice entirely.
+
+This is easy to miss from `calculateShiftAmount` alone, since it ignores the `hours` argument for the
+base charge. See [`examples/billing-model-walkthrough.ts`](examples/billing-model-walkthrough.ts) for a
+worked example, and run it with:
+
+```bash
+npx vitest run tests/billing-model-example.test.ts
+```
+
 ## Project structure
 
 ```text
